@@ -164,101 +164,148 @@ import os
 import sys
 from flask import Flask, request, abort
 from linebot.v3 import WebhookHandler
-from linebot.v3.webhooks import MessageEvent, TextMessageContent, UserSource
+from linebot.v3.webhooks import MessageEvent, TextMessageContent
 from linebot.v3.messaging import Configuration, ApiClient, MessagingApi, TextMessage, ReplyMessageRequest
 from linebot.v3.exceptions import InvalidSignatureError
 
-# LINE API credentials
-channel_access_token = os.environ.get("LINE_CHANNEL_ACCESS_TOKEN")
-channel_secret = os.environ.get("LINE_CHANNEL_SECRET")
+# LINE Botの認証情報を環境変数から取得
+channel_access_token = os.environ["LINE_CHANNEL_ACCESS_TOKEN"]
+channel_secret = os.environ["LINE_CHANNEL_SECRET"]
 
-if not channel_access_token or not channel_secret:
-    print("Specify LINE_CHANNEL_ACCESS_TOKEN and LINE_CHANNEL_SECRET as environment variables.")
+if channel_access_token is None or channel_secret is None:
+    print("Specify LINE_CHANNEL_ACCESS_TOKEN and LINE_CHANNEL_SECRET as environment variable.")
     sys.exit(1)
 
-# Flask app and LINE webhook handler
-app = Flask(__name__)
 handler = WebhookHandler(channel_secret)
 configuration = Configuration(access_token=channel_access_token)
 
-# Expanded Pokémon data (Diamond & Pearl Pokédex)
-pokemon_data = [
-{"name": "ナエトル", "type": ["くさ"], "height": 0.4, "weight": 10.2, "ability": ["しんりょく"]},
-    {"name": "ヒコザル", "type": ["ほのお"], "height": 0.5, "weight": 6.2, "ability": ["もうか"]},
-    {"name": "ポッチャマ", "type": ["みず"], "height": 0.4, "weight": 5.2, "ability": ["げきりゅう"]},
-    {"name": "ムクバード", "type": ["ノーマル", "ひこう"], "height": 0.6, "weight": 15.5, "ability": ["いかく", "するどいめ"]},
-    {"name": "ビーダル", "type": ["ノーマル", "みず"], "height": 1.0, "weight": 31.5, "ability": ["たんじゅん", "てんねん"]},
-    {"name": "コロトック", "type": ["むし"], "height": 1.0, "weight": 25.5, "ability": ["むしのしらせ"]},
-    {"name": "ロズレイド", "type": ["くさ", "どく"], "height": 0.9, "weight": 14.5, "ability": ["しんりょく"]},
-    {"name": "ガブリアス", "type": ["ドラゴン", "じめん"], "height": 1.9, "weight": 95.0, "ability": ["すながくれ"]},
-    {"name": "ピカチュウ", "type": ["でんき"], "height": 0.4, "weight": 6.0, "ability": ["せいでんき"]},
-    {"name": "ロコン", "type": ["ほのお"], "height": 0.6, "weight": 9.9, "ability": ["もらいび"]},
-    {"name": "サンド", "type": ["じめん"], "height": 0.6, "weight": 12.0, "ability": ["すながくれ"]},
-    {"name": "ズバット", "type": ["どく", "ひこう"], "height": 0.8, "weight": 7.5, "ability": ["せいしんりょく"]},
-    {"name": "ゴルバット", "type": ["どく", "ひこう"], "height": 1.6, "weight": 55.0, "ability": ["せいしんりょく"]},
-    {"name": "ニャース", "type": ["ノーマル"], "height": 0.4, "weight": 4.2, "ability": ["ものひろい"]},
-    {"name": "イーブイ", "type": ["ノーマル"], "height": 0.3, "weight": 6.5, "ability": ["にげあし", "てきおうりょく"]},
-    {"name": "エーフィ", "type": ["エスパー"], "height": 0.9, "weight": 26.5, "ability": ["シンクロ"]},
-    {"name": "ブラッキー", "type": ["あく"], "height": 1.0, "weight": 27.0, "ability": ["シンクロ"]},
-    {"name": "ラルトス", "type": ["エスパー", "フェアリー"], "height": 0.4, "weight": 6.6, "ability": ["シンクロ", "トレース"]},
-    {"name": "キルリア", "type": ["エスパー", "フェアリー"], "height": 0.8, "weight": 20.2, "ability": ["シンクロ", "トレース"]},
-    {"name": "サーナイト", "type": ["エスパー", "フェアリー"], "height": 1.6, "weight": 48.4, "ability": ["シンクロ", "トレース"]},
-    {"name": "ハスボー", "type": ["みず", "くさ"], "height": 0.5, "weight": 2.6, "ability": ["すいすい", "あめうけざら"]},
-    {"name": "ルンパッパ", "type": ["みず", "くさ"], "height": 1.5, "weight": 55.0, "ability": ["すいすい", "あめうけざら"]},
-    {"name": "ドジョッチ", "type": ["みず", "じめん"], "height": 0.4, "weight": 1.9, "ability": ["どんかん", "すいすい"]},
-    {"name": "ナマズン", "type": ["みず", "じめん"], "height": 0.9, "weight": 23.6, "ability": ["どんかん", "すいすい"]},
+app = Flask(__name__)
+
+# ポケモン図鑑データ（特徴を追加）
+pokedex = [
+    {
+        "name": "ナエトル",
+        "type": ["くさ"],
+        "color": "みどり",
+        "evolution": True,
+        "habitat": "森",
+        "classification": "わかばポケモン",
+        "weight": "軽い",
+        "height": "小さい",
+    },
+    {
+        "name": "ドダイトス",
+        "type": ["くさ", "じめん"],
+        "color": "みどり",
+        "evolution": False,
+        "habitat": "森",
+        "classification": "だいちポケモン",
+        "weight": "重い",
+        "height": "大きい",
+    },
+    {
+        "name": "ポッチャマ",
+        "type": ["みず"],
+        "color": "あお",
+        "evolution": True,
+        "habitat": "海",
+        "classification": "ペンギンポケモン",
+        "weight": "軽い",
+        "height": "小さい",
+    },
+    {
+        "name": "エンペルト",
+        "type": ["みず", "はがね"],
+        "color": "あお",
+        "evolution": False,
+        "habitat": "海",
+        "classification": "かいていポケモン",
+        "weight": "重い",
+        "height": "大きい",
+    },
+
+    # 必要に応じて追加
 ]
 
-# Global variables for filtering process
-pokemon_candidates = pokemon_data
-filter_stage = "type"  # Current stage of filtering: "type", "ability", or "done"
+# 初期化用の変数
+current_candidates = pokedex.copy()
+current_question_index = 0
+questions = [
+    {"key": "type", "question": "そのポケモンはどのタイプですか？", "options": ["くさ", "ほのお", "みず", "じめん", "はがね"]},
+    {"key": "color", "question": "そのポケモンの色は何ですか？", "options": ["みどり", "あか", "あお"]},
+    {"key": "habitat", "question": "そのポケモンはどこに住んでいますか？", "options": ["森", "山", "海"]},
+    {"key": "classification", "question": "そのポケモンの分類は何ですか？", "options": ["わかばポケモン", "だいちポケモン", "ペンギンポケモン", "かいていポケモン"]},
+    {"key": "weight", "question": "そのポケモンの体重はどのくらいですか？", "options": ["軽い", "普通", "重い"]},
+    {"key": "height", "question": "そのポケモンの高さはどのくらいですか？", "options": ["小さい", "普通", "大きい"]},
+    {"key": "evolution", "question": "そのポケモンは進化しますか？", "options": ["はい", "いいえ"]},
+]
 
-# Function to filter Pokémon based on user responses
-def filter_pokemon(pokemon_list, key, value):
-    return [pokemon for pokemon in pokemon_list if value in pokemon.get(key, [])]
+# ゲームの初期化
+def reset_game():
+    global current_candidates, current_question_index
+    current_candidates = pokedex.copy()
+    current_question_index = 0
 
-# Handle user messages
-@handler.add(MessageEvent, message=TextMessageContent)
-def handle_message(event):
-    global pokemon_candidates, filter_stage
-    user_message = event.message.text.strip()
 
-    if user_message.lower() == "start":
-        # Reset the game
-        pokemon_candidates = pokemon_data
-        filter_stage = "type"
-        reply_text = "ポケモンアキネーターを始めます！まずポケモンのタイプを教えてください。例: くさ, ほのお, みず"
-    elif filter_stage == "type":
-        # Filter by type
-        pokemon_candidates = filter_pokemon(pokemon_candidates, "type", user_message)
-        if len(pokemon_candidates) == 0:
-            reply_text = "該当するポケモンが見つかりませんでした。もう一度タイプを教えてください。例: くさ, ほのお, みず"
-        elif len(pokemon_candidates) == 1:
-            reply_text = f"あなたが思い浮かべているポケモンは {pokemon_candidates[0]['name']} です！"
-            filter_stage = "done"
-        else:
-            filter_stage = "ability"
-            reply_text = "次にポケモンの特性を教えてください。例: しんりょく, もうか, げきりゅう"
-    elif filter_stage == "ability":
-        # Filter by ability
-        pokemon_candidates = filter_pokemon(pokemon_candidates, "ability", user_message)
-        if len(pokemon_candidates) == 0:
-            reply_text = "該当するポケモンが見つかりませんでした。もう一度特性を教えてください。例: しんりょく, もうか, げきりゅう"
-        elif len(pokemon_candidates) == 1:
-            reply_text = f"あなたが思い浮かべているポケモンは {pokemon_candidates[0]['name']} です！"
-            filter_stage = "done"
-        else:
-            filter_stage = "done"
-            reply_text = f"候補が複数あります: {[p['name'] for p in pokemon_candidates]}\n他の条件でも絞り込みたい場合は 'start' と入力してください。"
-    else:
-        reply_text = "すみません、現在の質問には対応していません。もう一度 'start' と入力してゲームを始めてください。"
+# 質問を取得
+def ask_question():
+    global current_question_index
 
-    # Send reply
-    with ApiClient(configuration) as api_client:
-        line_bot_api = MessagingApi(api_client)
-        line_bot_api.reply_message_with_http_info(ReplyMessageRequest(
-            reply_token=event.reply_token, messages=[TextMessage(text=reply_text)]
-        ))
+    if len(current_candidates) == 1:
+        return f"答えは {current_candidates[0]['name']} です！"
+
+    if not current_candidates:
+        return "該当するポケモンが見つかりませんでした。ゲームをリセットしてください。"
+
+    if current_question_index < len(questions):
+        q = questions[current_question_index]
+        return q["question"] + "\n" + " / ".join(q["options"])
+
+    return "質問が終了しましたが、特定できませんでした。リセットしてください。"
+
+
+# 候補を絞り込む
+# 候補を絞り込む（修正済み）
+def filter_candidates(key, value):
+    global current_candidates
+    if key == "evolution":
+        value = value == "はい"  # "はい"をTrue、"いいえ"をFalseとして解釈
+    current_candidates = [
+        p for p in current_candidates if value in (p[key] if isinstance(p[key], list) else [p[key]])
+    ]
+
+
+# ユーザーの回答を処理（修正済み）
+def process_user_response(user_response):
+    global current_question_index
+
+    # リセット処理
+    if user_response in ["リセット", "reset"]:
+        reset_game()
+        return "ゲームをリセットしました！"
+
+    # 現在の質問に応じた回答処理
+    if current_question_index < len(questions):
+        q = questions[current_question_index]
+
+        # 正しい選択肢を確認
+        if user_response not in q["options"]:
+            return f"正しい選択肢を入力してください: {', '.join(q['options'])}"
+
+        # フィルタリング
+        filter_candidates(q["key"], user_response)
+        current_question_index += 1  # 次の質問へ進む
+        return ask_question()
+
+    # 候補が1つに絞られた場合
+    if len(current_candidates) == 1:
+        return f"答えは {current_candidates[0]['name']} です！"
+
+    # 候補がなくなった場合
+    if not current_candidates:
+        return "該当するポケモンが見つかりませんでした。リセットしてください。"
+
+    return "質問が終了しましたが、特定できませんでした。リセットしてください。"
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=8000, debug=True)
