@@ -181,9 +181,9 @@ app = Flask(__name__)
 handler = WebhookHandler(channel_secret)
 configuration = Configuration(access_token=channel_access_token)
 
-# Expanded Pokémon data (Diamond & Pearl)
+# Expanded Pokémon data (Diamond & Pearl Pokédex)
 pokemon_data = [
-    {"name": "ナエトル", "type": ["くさ"], "height": 0.4, "weight": 10.2, "ability": ["しんりょく"]},
+{"name": "ナエトル", "type": ["くさ"], "height": 0.4, "weight": 10.2, "ability": ["しんりょく"]},
     {"name": "ヒコザル", "type": ["ほのお"], "height": 0.5, "weight": 6.2, "ability": ["もうか"]},
     {"name": "ポッチャマ", "type": ["みず"], "height": 0.4, "weight": 5.2, "ability": ["げきりゅう"]},
     {"name": "ムクバード", "type": ["ノーマル", "ひこう"], "height": 0.6, "weight": 15.5, "ability": ["いかく", "するどいめ"]},
@@ -209,6 +209,10 @@ pokemon_data = [
     {"name": "ナマズン", "type": ["みず", "じめん"], "height": 0.9, "weight": 23.6, "ability": ["どんかん", "すいすい"]},
 ]
 
+# Global variables for filtering process
+pokemon_candidates = pokemon_data
+filter_stage = "type"  # Current stage of filtering: "type", "ability", or "done"
+
 # Function to filter Pokémon based on user responses
 def filter_pokemon(pokemon_list, key, value):
     return [pokemon for pokemon in pokemon_list if value in pokemon.get(key, [])]
@@ -216,14 +220,38 @@ def filter_pokemon(pokemon_list, key, value):
 # Handle user messages
 @handler.add(MessageEvent, message=TextMessageContent)
 def handle_message(event):
+    global pokemon_candidates, filter_stage
     user_message = event.message.text.strip()
 
     if user_message.lower() == "start":
+        # Reset the game
+        pokemon_candidates = pokemon_data
+        filter_stage = "type"
         reply_text = "ポケモンアキネーターを始めます！まずポケモンのタイプを教えてください。例: くさ, ほのお, みず"
-        pokemon_candidates = pokemon_data  # Start with all Pokémon
+    elif filter_stage == "type":
+        # Filter by type
+        pokemon_candidates = filter_pokemon(pokemon_candidates, "type", user_message)
+        if len(pokemon_candidates) == 0:
+            reply_text = "該当するポケモンが見つかりませんでした。もう一度タイプを教えてください。例: くさ, ほのお, みず"
+        elif len(pokemon_candidates) == 1:
+            reply_text = f"あなたが思い浮かべているポケモンは {pokemon_candidates[0]['name']} です！"
+            filter_stage = "done"
+        else:
+            filter_stage = "ability"
+            reply_text = "次にポケモンの特性を教えてください。例: しんりょく, もうか, げきりゅう"
+    elif filter_stage == "ability":
+        # Filter by ability
+        pokemon_candidates = filter_pokemon(pokemon_candidates, "ability", user_message)
+        if len(pokemon_candidates) == 0:
+            reply_text = "該当するポケモンが見つかりませんでした。もう一度特性を教えてください。例: しんりょく, もうか, げきりゅう"
+        elif len(pokemon_candidates) == 1:
+            reply_text = f"あなたが思い浮かべているポケモンは {pokemon_candidates[0]['name']} です！"
+            filter_stage = "done"
+        else:
+            filter_stage = "done"
+            reply_text = f"候補が複数あります: {[p['name'] for p in pokemon_candidates]}\n他の条件でも絞り込みたい場合は 'start' と入力してください。"
     else:
-        # Process user input and filter candidates
-        reply_text = "すみません、まだその機能には対応していません。"
+        reply_text = "すみません、現在の質問には対応していません。もう一度 'start' と入力してゲームを始めてください。"
 
     # Send reply
     with ApiClient(configuration) as api_client:
@@ -231,6 +259,9 @@ def handle_message(event):
         line_bot_api.reply_message_with_http_info(ReplyMessageRequest(
             reply_token=event.reply_token, messages=[TextMessage(text=reply_text)]
         ))
+
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=8000, debug=True)
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=8000, debug=True)
