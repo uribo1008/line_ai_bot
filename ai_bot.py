@@ -179,7 +179,6 @@ if channel_access_token is None or channel_secret is None:
 handler = WebhookHandler(channel_secret)
 configuration = Configuration(access_token=channel_access_token)
 
-app = Flask(__name__)
 
 # ポケモン図鑑データ（特徴を追加）
 pokedex = [
