@@ -34,7 +34,7 @@ if azure_openai_endpoint is None or azure_openai_api_key is None or azure_openai
 handler = WebhookHandler(channel_secret)
 configuration = Configuration(access_token=channel_access_token)
 
-
+app = Flask(__name__)
 ai = AzureOpenAI(
     azure_endpoint=azure_openai_endpoint, api_key=azure_openai_api_key, api_version=azure_openai_api_version
 )
@@ -159,27 +159,27 @@ def handle_text_message(event):
         # メッセージを送信
         line_bot_api.reply_message_with_http_info(ReplyMessageRequest(reply_token=event.reply_token, messages=res))
 
-import json
-import os
-import sys
-from flask import Flask, request, abort
-from linebot.v3 import WebhookHandler
-from linebot.v3.webhooks import MessageEvent, TextMessageContent
-from linebot.v3.messaging import Configuration, ApiClient, MessagingApi, TextMessage, ReplyMessageRequest
-from linebot.v3.exceptions import InvalidSignatureError
+#import json
+#import os
+#import sys
+#from flask import Flask, request, abort
+#from linebot.v3 import WebhookHandler
+#from linebot.v3.webhooks import MessageEvent, TextMessageContent
+#from linebot.v3.messaging import Configuration, ApiClient, MessagingApi, TextMessage, ReplyMessageRequest
+#from linebot.v3.exceptions import InvalidSignatureError
 
 # LINE Botの認証情報を環境変数から取得
-channel_access_token = os.environ["LINE_CHANNEL_ACCESS_TOKEN"]
-channel_secret = os.environ["LINE_CHANNEL_SECRET"]
+#channel_access_token = os.environ["LINE_CHANNEL_ACCESS_TOKEN"]
+#channel_secret = os.environ["LINE_CHANNEL_SECRET"]
 
-if channel_access_token is None or channel_secret is None:
+#if channel_access_token is None or channel_secret is None:
     print("Specify LINE_CHANNEL_ACCESS_TOKEN and LINE_CHANNEL_SECRET as environment variable.")
     sys.exit(1)
 
-handler = WebhookHandler(channel_secret)
-configuration = Configuration(access_token=channel_access_token)
+#handler = WebhookHandler(channel_secret)
+#configuration = Configuration(access_token=channel_access_token)
 
-app = Flask(__name__)
+#app = Flask(__name__)
 
 # ポケモン図鑑データ（特徴を追加）
 pokedex = [
