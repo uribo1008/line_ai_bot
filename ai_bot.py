@@ -182,53 +182,82 @@ configuration = Configuration(access_token=channel_access_token)
 app = Flask(__name__)
 
 # ポケモン図鑑データ（特徴を追加）
-pokedex = [
+pokemon_data = [
     {
         "name": "ナエトル",
         "type": ["くさ"],
-        "color": "みどり",
-        "evolution": True,
-        "habitat": "森",
-        "classification": "わかばポケモン",
-        "weight": "軽い",
-        "height": "小さい",
+        "abilities": ["しんりょく"],
+        "classification": "はっぱポケモン",
+        "height": 0.4,  # メートル
+        "weight": 10.2,  # キログラム
+        "number": 387,
+        "evolution": {
+            "previous": None,
+            "next": ["ハヤシガメ"]
+        },
+        "description": "ひなたで　からだを　あたためる。　こうらの　うえの　はっぱで　ひがしるし　が　わかる。",
+    },
+    {
+        "name": "ハヤシガメ",
+        "type": ["くさ"],
+        "abilities": ["しんりょく"],
+        "classification": "うみがめポケモン",
+        "height": 1.1,
+        "weight": 97.0,
+        "number": 388,
+        "evolution": {
+            "previous": ["ナエトル"],
+            "next": ["ドダイトス"]
+        },
+        "description": "つちの　なかから　えいようを　すいとると　せなかの　くさが　そだつ。　のやまに　すむ。",
     },
     {
         "name": "ドダイトス",
         "type": ["くさ", "じめん"],
-        "color": "みどり",
-        "evolution": False,
-        "habitat": "森",
-        "classification": "だいちポケモン",
-        "weight": "重い",
-        "height": "大きい",
+        "abilities": ["しんりょく"],
+        "classification": "たいりくポケモン",
+        "height": 2.2,
+        "weight": 310.0,
+        "number": 389,
+        "evolution": {
+            "previous": ["ハヤシガメ"],
+            "next": None
+        },
+        "description": "せなかの　おおきな　きの　まわりに　ちいさな　ポケモンが　あつまって　くらす。",
+    },
+    {
+        "name": "ヒコザル",
+        "type": ["ほのお"],
+        "abilities": ["もうか"],
+        "classification": "こざるポケモン",
+        "height": 0.5,
+        "weight": 6.2,
+        "number": 390,
+        "evolution": {
+            "previous": None,
+            "next": ["モウカザル"]
+        },
+        "description": "おしりから　でている　ひは　きぶんで　もえかたが　かわる。　あめの　ひは　ちいさくなる。",
     },
     {
         "name": "ポッチャマ",
         "type": ["みず"],
-        "color": "あお",
-        "evolution": True,
-        "habitat": "海",
+        "abilities": ["げきりゅう"],
         "classification": "ペンギンポケモン",
-        "weight": "軽い",
-        "height": "小さい",
-    },
-    {
-        "name": "エンペルト",
-        "type": ["みず", "はがね"],
-        "color": "あお",
-        "evolution": False,
-        "habitat": "海",
-        "classification": "かいていポケモン",
-        "weight": "重い",
-        "height": "大きい",
-    },
-
-    # 必要に応じて追加
+        "height": 0.4,
+        "weight": 5.2,
+        "number": 393,
+        "evolution": {
+            "previous": None,
+            "next": ["ポッタイシ"]
+        },
+        "description": "みずを　はっしゃして　きょうてきに　ちょうせんする。　プライドが　たかく　なかなか　なつかない。",
+    }
 ]
 
+
 # 初期化用の変数
-current_candidates = pokedex.copy()
+current_candidates = pokemon_data.copy()
 current_question_index = 0
 questions = [
     {"key": "type", "question": "そのポケモンはどのタイプですか？", "options": ["くさ", "ほのお", "みず", "じめん", "はがね"]},
@@ -243,7 +272,7 @@ questions = [
 # ゲームの初期化
 def reset_game():
     global current_candidates, current_question_index
-    current_candidates = pokedex.copy()
+    current_candidates = pokemon_data.copy()
     current_question_index = 0
 
 
