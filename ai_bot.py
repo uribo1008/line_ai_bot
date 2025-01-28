@@ -34,7 +34,7 @@ if azure_openai_endpoint is None or azure_openai_api_key is None or azure_openai
 handler = WebhookHandler(channel_secret)
 configuration = Configuration(access_token=channel_access_token)
 
-app = Flask(__name__)
+
 ai = AzureOpenAI(
     azure_endpoint=azure_openai_endpoint, api_key=azure_openai_api_key, api_version=azure_openai_api_version
 )
@@ -179,6 +179,7 @@ if channel_access_token is None or channel_secret is None:
 handler = WebhookHandler(channel_secret)
 configuration = Configuration(access_token=channel_access_token)
 
+app = Flask(__name__)
 
 # ポケモン図鑑データ（特徴を追加）
 pokedex = [
